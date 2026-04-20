@@ -80,7 +80,12 @@ const emptyCreditForm = {
   note: '',
 };
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const productionApiBaseUrl = 'https://caramel-eight.vercel.app';
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+const apiBaseUrl = (
+  configuredApiBaseUrl ||
+  (window.location.hostname === 'localhost' ? '' : productionApiBaseUrl)
+).replace(/\/$/, '');
 
 async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
   const requestUrl = `${apiBaseUrl}${path}`;
