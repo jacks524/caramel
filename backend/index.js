@@ -12,9 +12,19 @@ const port = Number(process.env.PORT || 4000);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const distPath = path.resolve(__dirname, '../frontend/dist');
+const isVercel = Boolean(process.env.VERCEL);
+const dbReady = initializeDatabase();
 
 app.use(cors());
 app.use(express.json());
+app.use(async (_request, _response, next) => {
+  try {
+    await dbReady;
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 function toNumber(value) {
   return Number(value || 0);
@@ -270,13 +280,17 @@ app.use((error, _request, response, _next) => {
   response.status(500).json({ error: 'Une erreur serveur est survenue.' });
 });
 
-initializeDatabase()
-  .then(() => {
-    app.listen(port, () => {
-      console.log(`Server running on http://localhost:${port}`);
+if (!isVercel) {
+  dbReady
+    .then(() => {
+      app.listen(port, () => {
+        console.log(`Server running on http://localhost:${port}`);
+      });
+    })
+    .catch((error) => {
+      console.error('Database initialization failed:', error);
+      process.exit(1);
     });
-  })
-  .catch((error) => {
-    console.error('Database initialization failed:', error);
-    process.exit(1);
-  });
+}
+
+export default app;
