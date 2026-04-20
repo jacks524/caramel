@@ -1,0 +1,26 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: caramel-backend
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: caramel-frontend
+    depends_on:
+      - backend
+    environment:
+      BACKEND_HOST: backend
+      BACKEND_PORT: 4000
+    ports:
+      - "8080:80"
+    restart: unless-stopped
