@@ -2,9 +2,24 @@ import pg from 'pg';
 
 const { Pool } = pg;
 
-const connectionString =
+const rawConnectionString =
   process.env.DATABASE_URL ||
   'postgres://avnadmin:CHANGE_ME@pg-1866e92d-jacquyngonga-6292.g.aivencloud.com:28415/defaultdb?sslmode=require';
+
+function sanitizeConnectionString(connectionString) {
+  try {
+    const url = new URL(connectionString);
+    url.searchParams.delete('sslmode');
+    url.searchParams.delete('sslcert');
+    url.searchParams.delete('sslkey');
+    url.searchParams.delete('sslrootcert');
+    return url.toString();
+  } catch {
+    return connectionString;
+  }
+}
+
+const connectionString = sanitizeConnectionString(rawConnectionString);
 
 export const pool = new Pool({
   connectionString,
