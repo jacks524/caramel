@@ -6,27 +6,30 @@ const rawConnectionString =
   process.env.DATABASE_URL ||
   'postgres://avnadmin:CHANGE_ME@pg-1866e92d-jacquyngonga-6292.g.aivencloud.com:28415/defaultdb?sslmode=require';
 
-function sanitizeConnectionString(connectionString) {
-  try {
-    const url = new URL(connectionString);
-    url.searchParams.delete('sslmode');
-    url.searchParams.delete('sslcert');
-    url.searchParams.delete('sslkey');
-    url.searchParams.delete('sslrootcert');
-    return url.toString();
-  } catch {
-    return connectionString;
-  }
+function buildPoolConfig(connectionString) {
+  const url = new URL(connectionString);
+  const ca = process.env.PG_CA_CERT?.replace(/\\n/g, '\n');
+
+  return {
+    host: url.hostname,
+    port: Number(url.port || 5432),
+    database: url.pathname.replace(/^\//, ''),
+    user: decodeURIComponent(url.username),
+    password: decodeURIComponent(url.password),
+    ssl: ca
+      ? {
+          ca,
+          rejectUnauthorized: true,
+        }
+      : {
+          rejectUnauthorized: false,
+        },
+  };
 }
 
-const connectionString = sanitizeConnectionString(rawConnectionString);
+const poolConfig = buildPoolConfig(rawConnectionString);
 
-export const pool = new Pool({
-  connectionString,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
+export const pool = new Pool(poolConfig);
 
 export async function initializeDatabase() {
   await pool.query(`
