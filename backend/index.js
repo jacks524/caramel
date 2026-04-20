@@ -38,6 +38,25 @@ function validateAmount(amount) {
   return Number.isFinite(amount) && amount >= 0;
 }
 
+app.get('/', (_request, response) => {
+  response.json({
+    ok: true,
+    service: 'caramel-backend',
+    message: 'API backend Caramel active.',
+    endpoints: {
+      health: '/api/health',
+      revenues: '/api/revenues',
+      expenses: '/api/expenses',
+      credits: '/api/credits',
+      summary: '/api/summary',
+    },
+  });
+});
+
+app.get(['/favicon.ico', '/favicon.png'], (_request, response) => {
+  response.status(204).end();
+});
+
 app.get('/api/health', async (_request, response) => {
   const result = await pool.query('SELECT NOW() AS now');
   response.json({ ok: true, now: result.rows[0].now });
